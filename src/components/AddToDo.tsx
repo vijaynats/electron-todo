@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useImperativeHandle } from 'react';
 import styles from '../todo.module.css';
 import { ITask } from '../types';
 
@@ -9,6 +9,17 @@ type Props = {
 
 const AddToDo = React.forwardRef<HTMLInputElement, Props>(({ tasks, setTask }, ref) => {
   const [text, setText] = useState('');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Expose the native input methods via the forwarded ref and ensure callers can focus/select
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+    select: () => inputRef.current?.select(),
+    // also expose the raw element
+    get current() {
+      return inputRef.current!
+    }
+  } as unknown as HTMLInputElement), []);
 
   const onAdd = () => {
     if (!text.trim()) {
@@ -36,7 +47,8 @@ const AddToDo = React.forwardRef<HTMLInputElement, Props>(({ tasks, setTask }, r
         type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        ref={ref}
+        ref={inputRef}
+        disabled={false}
         placeholder="Enter new task"
         tabIndex={0}
         aria-label="New task"
